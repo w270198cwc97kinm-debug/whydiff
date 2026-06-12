@@ -1,8 +1,8 @@
-# recap — agent sessions, reviewable
+# whydiff — agent sessions, reviewable
 
-**recap** reconstructs what your coding agent actually did — *intent → decisions → actions → verification* — and correlates it with your git diff, so you can review **why** the changes were made, not just what changed.
+**whydiff** reconstructs what your coding agent actually did — *intent → decisions → actions → verification* — and correlates it with your git diff, so you can review **why** the changes were made, not just what changed.
 
-When an agent generates a 35-file PR, no human holds an authoritative understanding of why each change exists. Review bots find bugs; **recap reconstructs the reasoning.**
+When an agent generates a 35-file PR, no human holds an authoritative understanding of why each change exists. Review bots find bugs; **whydiff reconstructs the reasoning.**
 
 - 🏠 **Local-first** — reads Claude Code session transcripts already on your machine. No network, no API keys, no code leaves your laptop.
 - 🧭 **Per-file "why"** — every session-authored file is linked to the agent's own narration that produced it.
@@ -13,7 +13,7 @@ When an agent generates a 35-file PR, no human holds an authoritative understand
 ## Install
 
 ```sh
-go install github.com/kainuma/recap@latest
+go install github.com/w270198cwc97kinm-debug/whydiff@latest
 ```
 
 (or download a binary from Releases)
@@ -21,19 +21,19 @@ go install github.com/kainuma/recap@latest
 ## Usage
 
 ```sh
-recap                    # newest session for this repo + auto-detected diff base
-recap list               # list sessions recorded for this repo
-recap --base main        # explicit diff base ("worktree" = uncommitted changes)
-recap --md report.md     # markdown report — paste into your PR
-recap --html report.html # self-contained HTML report
-recap --session <path>   # specific transcript (.jsonl)
+whydiff                    # newest session for this repo + auto-detected diff base
+whydiff list               # list sessions recorded for this repo
+whydiff --base main        # explicit diff base ("worktree" = uncommitted changes)
+whydiff --md report.md     # markdown report — paste into your PR
+whydiff --html report.html # self-contained HTML report
+whydiff --session <path>   # specific transcript (.jsonl)
 ```
 
 ### Typical workflow
 
 ```sh
 # agent finishes a task; before opening the PR:
-recap --md RECAP.md && gh pr create --body-file RECAP.md
+whydiff --md RECAP.md && gh pr create --body-file RECAP.md
 ```
 
 Reviewers see: the original ask, the agent's decision trail per file, what was verified (and what wasn't), and every risk flag — before reading a single diff hunk.
@@ -52,11 +52,11 @@ Markers: `🤖` agent-authored (from the session) · `✋` in the diff but **not
 ## Supported agents
 
 - **Claude Code** (session transcripts in `~/.claude/projects/...`) — today.
-- The transcript format is internal to Claude Code and may change; recap parses defensively and skips what it doesn't understand. Issues/PRs for other agents (Codex CLI, Cursor, OpenCode…) welcome.
+- The transcript format is internal to Claude Code and may change; whydiff parses defensively and skips what it doesn't understand. Issues/PRs for other agents (Codex CLI, Cursor, OpenCode…) welcome.
 
 ## How it works
 
-recap parses the session JSONL (user prompts, assistant narration, tool calls, tool results), joins tool calls to their results, classifies actions (edit / write / command / **verify** = test·lint·typecheck·build), builds a per-file story, diffs your repo, and runs deterministic risk rules. **No LLM calls** — the report is a faithful reconstruction, not a summary that can hallucinate.
+whydiff parses the session JSONL (user prompts, assistant narration, tool calls, tool results), joins tool calls to their results, classifies actions (edit / write / command / **verify** = test·lint·typecheck·build), builds a per-file story, diffs your repo, and runs deterministic risk rules. **No LLM calls** — the report is a faithful reconstruction, not a summary that can hallucinate.
 
 ## License
 

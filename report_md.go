@@ -13,8 +13,8 @@ func RenderMarkdown(r *Report) string {
 	if title == "" {
 		title = r.Session.ID
 	}
-	fmt.Fprintf(&b, "# recap — %s\n\n", title)
-	fmt.Fprintf(&b, "> Agent session reconstructed for review by `recap` — intent → decisions → actions → verification.\n\n")
+	fmt.Fprintf(&b, "# whydiff — %s\n\n", title)
+	fmt.Fprintf(&b, "> Agent session reconstructed for review by `whydiff` — intent → decisions → actions → verification.\n\n")
 
 	// headline
 	fmt.Fprintf(&b, "**session**: `%s`  \n", r.Session.ID)

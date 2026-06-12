@@ -23,7 +23,7 @@ func RenderTerminal(r *Report) string {
 	if title == "" {
 		title = r.Session.ID
 	}
-	fmt.Fprintf(&b, "\n%s %s\n", c("1;36", "recap"), c("1", title))
+	fmt.Fprintf(&b, "\n%s %s\n", c("1;36", "whydiff"), c("1", title))
 	fmt.Fprintf(&b, "%s session=%s base=%s\n", c("2", "·"), c("2", clip(r.Session.ID, 12)), c("2", r.DiffBase))
 	fmt.Fprintf(&b, "%s %d prompts · %d decisions · %d tool calls · %d files · verify %d (fail %d) · errors %d · %.0f min\n\n",
 		c("2", "·"), r.Stats.UserPrompts, r.Stats.Decisions, r.Stats.ToolCalls, r.Stats.FilesTouched,
@@ -91,6 +91,6 @@ func RenderTerminal(r *Report) string {
 		fmt.Fprintf(&b, "  %s\n", c("2", fmt.Sprintf("… and %d more files not from this session (see --md/--html for all)", otherTotal-otherShown)))
 	}
 	b.WriteString("\n")
-	fmt.Fprintf(&b, "%s\n", c("2", "full report: recap --md report.md / recap --html report.html"))
+	fmt.Fprintf(&b, "%s\n", c("2", "full report: whydiff --md report.md / whydiff --html report.html"))
 	return b.String()
 }

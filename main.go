@@ -1,4 +1,4 @@
-// recap — make agent PRs reviewable.
+// whydiff — make agent PRs reviewable.
 //
 // Reconstructs a coding-agent session (intent → decisions → actions → verification)
 // and correlates it with the git diff, so a human can review *why* the changes
@@ -6,12 +6,12 @@
 //
 // Usage:
 //
-//	recap                         # newest session for this repo + auto diff base
-//	recap list                    # list sessions for this repo
-//	recap --session <path>        # specific transcript
-//	recap --base main             # explicit diff base (ref) | "worktree"
-//	recap --md out.md             # write markdown (paste into your PR)
-//	recap --html out.html         # write self-contained HTML report
+//	whydiff                         # newest session for this repo + auto diff base
+//	whydiff list                    # list sessions for this repo
+//	whydiff --session <path>        # specific transcript
+//	whydiff --base main             # explicit diff base (ref) | "worktree"
+//	whydiff --md out.md             # write markdown (paste into your PR)
+//	whydiff --html out.html         # write self-contained HTML report
 package main
 
 import (
@@ -30,7 +30,7 @@ func main() {
 		return
 	}
 
-	fs := flag.NewFlagSet("recap", flag.ExitOnError)
+	fs := flag.NewFlagSet("whydiff", flag.ExitOnError)
 	sessionPath := fs.String("session", "", "transcript .jsonl path (default: newest for this repo)")
 	base := fs.String("base", "", `diff base ref (default: auto; "worktree" = uncommitted changes vs HEAD)`)
 	mdOut := fs.String("md", "", "write markdown report to file (- for stdout)")
@@ -40,7 +40,7 @@ func main() {
 	fs.Parse(os.Args[1:])
 
 	if *showVersion {
-		fmt.Println("recap", version)
+		fmt.Println("whydiff", version)
 		return
 	}
 
@@ -148,6 +148,6 @@ func runList() {
 }
 
 func fatal(format string, args ...any) {
-	fmt.Fprintf(os.Stderr, "recap: "+format+"\n", args...)
+	fmt.Fprintf(os.Stderr, "whydiff: "+format+"\n", args...)
 	os.Exit(1)
 }
