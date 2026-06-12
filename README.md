@@ -5,7 +5,7 @@
 When an agent generates a 35-file PR, no human holds an authoritative understanding of why each change exists. Review bots find bugs; **recap reconstructs the reasoning.**
 
 - 🏠 **Local-first** — reads Claude Code session transcripts already on your machine. No network, no API keys, no code leaves your laptop.
-- 🧭 **Per-file "why"** — every changed file is linked to the agent's own narration that produced it.
+- 🧭 **Per-file "why"** — every session-authored file is linked to the agent's own narration that produced it.
 - 🧪 **Verification gaps** — flags files edited *after* the last passing test/lint/build, sessions with **no verification at all**, and verify failures.
 - ⚠ **Risk rules** — dangerous commands (force-push, `rm -rf`, `curl | sh`, skipped hooks), unresolved errors, and **out-of-session changes** (diff entries the agent never wrote — human edits or command side-effects).
 - 📋 **Three outputs** — terminal summary, **markdown to paste into your PR description**, and a self-contained HTML report.

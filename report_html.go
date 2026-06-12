@@ -16,7 +16,7 @@ func RenderHTML(r *Report) string {
 	}
 	esc := html.EscapeString
 
-	b.WriteString(`<!DOCTYPE html><html lang="ja"><head><meta charset="utf-8">
+	b.WriteString(`<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>recap — ` + esc(title) + `</title>
 <style>
@@ -47,9 +47,9 @@ summary{cursor:pointer;padding:9px 12px;font-weight:600}details[open]>summary{bo
 		r.Stats.VerifyRuns, r.Stats.VerifyFailed, r.Stats.ToolErrors, r.Stats.DurationMin, r.Stats.SubagentEvents)
 
 	// risks
-	fmt.Fprintf(&b, `<h2>⚠ リスク (%d)</h2>`, len(r.Risks))
+	fmt.Fprintf(&b, `<h2>⚠ Risks (%d)</h2>`, len(r.Risks))
 	if len(r.Risks) == 0 {
-		b.WriteString(`<div class="card ok">検出なし</div>`)
+		b.WriteString(`<div class="card ok">None detected</div>`)
 	} else {
 		rs := append([]Risk(nil), r.Risks...)
 		sort.SliceStable(rs, func(i, j int) bool { return rs[i].Severity > rs[j].Severity })
@@ -62,7 +62,7 @@ summary{cursor:pointer;padding:9px 12px;font-weight:600}details[open]>summary{bo
 	}
 
 	// intent
-	b.WriteString(`<h2>依頼（intent）</h2><div class="card"><ol>`)
+	b.WriteString(`<h2>Intent (what was asked)</h2><div class="card"><ol>`)
 	for _, ex := range r.Exchanges {
 		if ex.Prompt == "(session resumed)" {
 			continue
@@ -72,7 +72,7 @@ summary{cursor:pointer;padding:9px 12px;font-weight:600}details[open]>summary{bo
 	b.WriteString(`</ol></div>`)
 
 	// files
-	fmt.Fprintf(&b, `<h2>変更ファイルと「なぜ」(%d in diff)</h2>`, len(r.Diff))
+	fmt.Fprintf(&b, `<h2>Changed files × why (%d in diff)</h2>`, len(r.Diff))
 	for _, df := range r.Diff {
 		st := findStory(r.Files, df.Path)
 		mark, ver := "🤖", ""
@@ -87,22 +87,22 @@ summary{cursor:pointer;padding:9px 12px;font-weight:600}details[open]>summary{bo
 		fmt.Fprintf(&b, `<details><summary>%s <span class="mono">%s</span> <span class="dim">%s %s</span>%s</summary><div class="body">`,
 			mark, esc(df.Path), esc(df.Status), esc(diffStat(df)), ver)
 		if st != nil {
-			fmt.Fprintf(&b, `<div class="dim">編集 %d 回 / 新規書込 %d 回</div>`, st.Edits, st.Writes)
+			fmt.Fprintf(&b, `<div class="dim">%d edits / %d writes</div>`, st.Edits, st.Writes)
 			if len(st.Rationales) > 0 {
-				b.WriteString(`<div>判断の流れ:</div><ul>`)
+				b.WriteString(`<div>Decision trail:</div><ul>`)
 				for _, ra := range st.Rationales {
 					fmt.Fprintf(&b, `<li>%s</li>`, esc(ra))
 				}
 				b.WriteString(`</ul>`)
 			}
 		} else {
-			b.WriteString(`<div class="dim">このセッションの Edit/Write 由来ではない（人手編集・コマンド副作用・別セッションの可能性）</div>`)
+			b.WriteString(`<div class="dim">Not written by this session (human edits, command side-effects, or another session)</div>`)
 		}
 		b.WriteString(`</div></details>`)
 	}
 
 	// timeline
-	b.WriteString(`<h2>タイムライン（判断 → 行動）</h2>`)
+	b.WriteString(`<h2>Timeline (decisions → actions)</h2>`)
 	for _, ex := range r.Exchanges {
 		fmt.Fprintf(&b, `<details><summary>👤 %s <span class="dim mono">%s</span></summary><div class="body">`,
 			esc(firstLine(ex.Prompt)), esc(ex.Timestamp.Local().Format("15:04")))

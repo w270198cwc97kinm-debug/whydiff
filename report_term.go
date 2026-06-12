@@ -30,7 +30,7 @@ func RenderTerminal(r *Report) string {
 		r.Stats.VerifyRuns, r.Stats.VerifyFailed, r.Stats.ToolErrors, r.Stats.DurationMin)
 
 	// risks
-	fmt.Fprintf(&b, "%s\n", c("1", fmt.Sprintf("⚠ リスク (%d)", len(r.Risks))))
+	fmt.Fprintf(&b, "%s\n", c("1", fmt.Sprintf("⚠ Risks (%d)", len(r.Risks))))
 	if len(r.Risks) == 0 {
 		fmt.Fprintf(&b, "  %s\n", c("32", "none"))
 	} else {
@@ -52,7 +52,7 @@ func RenderTerminal(r *Report) string {
 	b.WriteString("\n")
 
 	// intent
-	fmt.Fprintf(&b, "%s\n", c("1", "依頼 (intent)"))
+	fmt.Fprintf(&b, "%s\n", c("1", "Intent"))
 	n := 0
 	for _, ex := range r.Exchanges {
 		if ex.Prompt == "(session resumed)" {
@@ -64,7 +64,7 @@ func RenderTerminal(r *Report) string {
 	b.WriteString("\n")
 
 	// files: all agent-authored, then a capped list of the rest
-	fmt.Fprintf(&b, "%s\n", c("1", fmt.Sprintf("変更ファイル (%d in diff)", len(r.Diff))))
+	fmt.Fprintf(&b, "%s\n", c("1", fmt.Sprintf("Changed files (%d in diff)", len(r.Diff))))
 	const maxOther = 5
 	otherShown, otherTotal := 0, 0
 	for _, df := range r.Diff {
@@ -88,9 +88,9 @@ func RenderTerminal(r *Report) string {
 		}
 	}
 	if otherTotal > otherShown {
-		fmt.Fprintf(&b, "  %s\n", c("2", fmt.Sprintf("… ほか %d files（セッション外の変更; --md/--html で全件）", otherTotal-otherShown)))
+		fmt.Fprintf(&b, "  %s\n", c("2", fmt.Sprintf("… and %d more files not from this session (see --md/--html for all)", otherTotal-otherShown)))
 	}
 	b.WriteString("\n")
-	fmt.Fprintf(&b, "%s\n", c("2", "詳細: recap --md report.md / recap --html report.html"))
+	fmt.Fprintf(&b, "%s\n", c("2", "full report: recap --md report.md / recap --html report.html"))
 	return b.String()
 }

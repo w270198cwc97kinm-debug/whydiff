@@ -14,7 +14,7 @@ func RenderMarkdown(r *Report) string {
 		title = r.Session.ID
 	}
 	fmt.Fprintf(&b, "# recap — %s\n\n", title)
-	fmt.Fprintf(&b, "> agent session を review 可能な形に再構成したレポート。`recap` により生成。\n\n")
+	fmt.Fprintf(&b, "> Agent session reconstructed for review by `recap` — intent → decisions → actions → verification.\n\n")
 
 	// headline
 	fmt.Fprintf(&b, "**session**: `%s`  \n", r.Session.ID)
@@ -23,7 +23,7 @@ func RenderMarkdown(r *Report) string {
 		if r.Session.End.Local().YearDay() != r.Session.Start.Local().YearDay() {
 			endFmt = "2006-01-02 15:04"
 		}
-		fmt.Fprintf(&b, "**期間**: %s 〜 %s (%.0f min)  \n",
+		fmt.Fprintf(&b, "**span**: %s – %s (%.0f min)  \n",
 			r.Session.Start.Local().Format("2006-01-02 15:04"),
 			r.Session.End.Local().Format(endFmt), r.Stats.DurationMin)
 	}
@@ -33,9 +33,9 @@ func RenderMarkdown(r *Report) string {
 		r.Stats.VerifyRuns, r.Stats.VerifyFailed, r.Stats.ToolErrors, r.Stats.SubagentEvents)
 
 	// risks first: reviewers triage here
-	fmt.Fprintf(&b, "## ⚠ リスク（%d）\n\n", len(r.Risks))
+	fmt.Fprintf(&b, "## ⚠ Risks (%d)\n\n", len(r.Risks))
 	if len(r.Risks) == 0 {
-		b.WriteString("検出なし。\n\n")
+		b.WriteString("None detected.\n\n")
 	} else {
 		rs := append([]Risk(nil), r.Risks...)
 		sort.SliceStable(rs, func(i, j int) bool { return rs[i].Severity > rs[j].Severity })
@@ -47,44 +47,53 @@ func RenderMarkdown(r *Report) string {
 	}
 
 	// intent
-	b.WriteString("## 依頼（intent）\n\n")
-	for i, ex := range r.Exchanges {
+	b.WriteString("## Intent (what was asked)\n\n")
+	n := 0
+	for _, ex := range r.Exchanges {
 		if ex.Prompt == "(session resumed)" {
 			continue
 		}
-		fmt.Fprintf(&b, "%d. %s\n", i+1, mdEscape(firstLine(ex.Prompt)))
+		n++
+		fmt.Fprintf(&b, "%d. %s\n", n, mdEscape(firstLine(ex.Prompt)))
 	}
 	b.WriteString("\n")
 
-	// file stories — the core review view
-	fmt.Fprintf(&b, "## 変更ファイルと「なぜ」（%d files in diff）\n\n", countInDiff(r.Diff))
+	// file stories — the core review view (session-authored first, others folded)
+	var authored, others []DiffFile
 	for _, df := range r.Diff {
-		st := findStory(r.Files, df.Path)
-		mark := "🤖"
-		if st == nil {
-			mark = "✋" // not from this session's edits
-		}
-		fmt.Fprintf(&b, "### %s `%s` (%s %s)\n\n", mark, df.Path, df.Status, diffStat(df))
-		if st != nil {
-			verified := "❌ 最終編集後に verify なし"
-			if st.VerifiedAfter {
-				verified = "✅ 最終編集後に verify 成功あり"
-			}
-			fmt.Fprintf(&b, "- 編集 %d 回 / 新規書込 %d 回 — %s\n", st.Edits, st.Writes, verified)
-			if len(st.Rationales) > 0 {
-				b.WriteString("- 判断の流れ:\n")
-				for _, ra := range st.Rationales {
-					fmt.Fprintf(&b, "  - %s\n", mdEscape(ra))
-				}
-			}
+		if findStory(r.Files, df.Path) != nil {
+			authored = append(authored, df)
 		} else {
-			b.WriteString("- このセッションの Edit/Write 由来ではない（人手編集・コマンド副作用・別セッションの可能性）\n")
+			others = append(others, df)
+		}
+	}
+	fmt.Fprintf(&b, "## Changed files × why (%d in diff, %d from this session)\n\n", len(r.Diff), len(authored))
+	for _, df := range authored {
+		st := findStory(r.Files, df.Path)
+		fmt.Fprintf(&b, "### 🤖 `%s` (%s %s)\n\n", df.Path, df.Status, diffStat(df))
+		verified := "❌ not verified after last edit"
+		if st.VerifiedAfter {
+			verified = "✅ verified after last edit"
+		}
+		fmt.Fprintf(&b, "- %d edits / %d writes — %s\n", st.Edits, st.Writes, verified)
+		if len(st.Rationales) > 0 {
+			b.WriteString("- decision trail:\n")
+			for _, ra := range st.Rationales {
+				fmt.Fprintf(&b, "  - %s\n", mdEscape(ra))
+			}
 		}
 		b.WriteString("\n")
 	}
+	if len(others) > 0 {
+		fmt.Fprintf(&b, "<details><summary>✋ %d files in the diff were <b>not</b> written by this session (human edits, command side-effects, or another session)</summary>\n\n", len(others))
+		for _, df := range others {
+			fmt.Fprintf(&b, "- `%s` (%s %s)\n", df.Path, df.Status, diffStat(df))
+		}
+		b.WriteString("\n</details>\n\n")
+	}
 
-	// timeline (collapsed style: one line per decision)
-	b.WriteString("## タイムライン（判断 → 行動）\n\n")
+	// timeline (collapsed: one line per decision)
+	b.WriteString("## Timeline (decisions → actions)\n\n")
 	for _, ex := range r.Exchanges {
 		fmt.Fprintf(&b, "<details><summary><b>👤 %s</b></summary>\n\n", mdEscape(firstLine(ex.Prompt)))
 		for _, d := range ex.Decisions {
@@ -138,8 +147,6 @@ func findStory(files []*FileStory, path string) *FileStory {
 	}
 	return nil
 }
-
-func countInDiff(diff []DiffFile) int { return len(diff) }
 
 // diffStat renders +N/−M, or "(new)" for untracked files where numstat is unavailable.
 func diffStat(df DiffFile) string {

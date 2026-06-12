@@ -39,7 +39,7 @@ func AssessRisks(exchanges []Exchange, files []*FileStory, diff []DiffFile, stat
 		if !f.VerifiedAfter {
 			risks = append(risks, Risk{
 				Rule: "edited-after-verify", Severity: SevWarn, Subject: f.Path,
-				Detail: "最後の verify 成功より後に編集されている（検証ギャップ）",
+				Detail: "edited after the last successful verify run (verification gap)",
 			})
 		}
 	}
@@ -47,7 +47,7 @@ func AssessRisks(exchanges []Exchange, files []*FileStory, diff []DiffFile, stat
 	if !anyVerify && len(files) > 0 {
 		risks = append(risks, Risk{
 			Rule: "no-verification", Severity: SevHigh, Subject: fmt.Sprintf("%d files touched", len(files)),
-			Detail: "セッション中に test/lint/typecheck/build が一度も実行されていない",
+			Detail: "no test/lint/typecheck/build was run at any point in this session",
 		})
 	}
 	// failed verify at session end
@@ -55,7 +55,7 @@ func AssessRisks(exchanges []Exchange, files []*FileStory, diff []DiffFile, stat
 		risks = append(risks, Risk{
 			Rule: "verify-failures", Severity: SevWarn,
 			Subject: fmt.Sprintf("%d/%d verify runs failed", stats.VerifyFailed, stats.VerifyRuns),
-			Detail:  "失敗した verify 実行がある。最終状態で解消済みかを確認のこと",
+			Detail:  "some verify runs failed; confirm they were resolved in the final state",
 		})
 	}
 
@@ -77,7 +77,7 @@ func AssessRisks(exchanges []Exchange, files []*FileStory, diff []DiffFile, stat
 						risks = append(risks, Risk{
 							Rule: "dangerous-command/" + p.name, Severity: p.sev,
 							Subject: clip(a.Command, 120),
-							Detail:  "破壊的/不可逆になり得るコマンド",
+							Detail:  "potentially destructive/irreversible command",
 						})
 					}
 				}
@@ -116,7 +116,7 @@ func AssessRisks(exchanges []Exchange, files []*FileStory, diff []DiffFile, stat
 		if st.lastErr && st.errCount > 0 {
 			risks = append(risks, Risk{
 				Rule: "unresolved-error", Severity: SevWarn, Subject: head,
-				Detail: fmt.Sprintf("このコマンド種の最後の実行がエラーのまま（%d回失敗, 例: %s）", st.errCount, st.example),
+				Detail: fmt.Sprintf("last run of this command kind is still failing (%d failures, e.g. %s)", st.errCount, st.example),
 			})
 		}
 	}
@@ -136,7 +136,7 @@ func AssessRisks(exchanges []Exchange, files []*FileStory, diff []DiffFile, stat
 		risks = append(risks, Risk{
 			Rule: "out-of-session-changes", Severity: SevInfo,
 			Subject: fmt.Sprintf("%d files", len(outOfSession)),
-			Detail:  "diff に含まれるがこのセッションの Edit/Write 由来でない変更（人手編集・コマンド副作用・別セッション）: " + clip(strings.Join(outOfSession, ", "), 240),
+			Detail:  "in the diff but not written by this session (human edits, command side-effects, or another session): " + clip(strings.Join(outOfSession, ", "), 240),
 		})
 	}
 	var notInDiff []string
@@ -149,7 +149,7 @@ func AssessRisks(exchanges []Exchange, files []*FileStory, diff []DiffFile, stat
 		risks = append(risks, Risk{
 			Rule: "session-edits-not-in-diff", Severity: SevInfo,
 			Subject: fmt.Sprintf("%d files", len(notInDiff)),
-			Detail:  "セッションで編集されたが diff 範囲に現れないファイル（コミット済み/破棄/範囲外）: " + clip(strings.Join(notInDiff, ", "), 240),
+			Detail:  "edited in the session but absent from the diff range (already committed, reverted, or out of scope): " + clip(strings.Join(notInDiff, ", "), 240),
 		})
 	}
 
