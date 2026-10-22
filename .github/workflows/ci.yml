@@ -1,0 +1,31 @@
+# whydiff の CI。PR と main への push で、go vet と go test を回す。
+# 手元では `go vet ./... && go test ./...` と同じ。Go のバージョンは go.mod（1.26.2）に合わせる。
+# golangci-lint は入れていない。今の main で errcheck が 3 件（main.go:40 の fs.Parse、parser.go:58・316 の f.Close）出て赤になるため。
+# 直したら lint のステップを足す（golangci-lint 2.14.0）。
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - name: go vet
+        run: go vet ./...
+      - name: テスト
+        run: go test -race -count=1 ./...
